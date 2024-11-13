@@ -1,0 +1,36 @@
+.repeated {
+    display: flex;
+    margin-top: .2rem;
+    margin-bottom: .2rem;
+}
+
+.repeat-cross {
+    margin: .4rem;
+}
+
+.repeat-cross:hover {
+    border-color: var(--bs-primary) !important;
+    color: var(--bs-primary) !important;
+}
+
+.repeat-add:hover {
+    border-color: var(--bs-primary) !important;
+    color: var(--bs-primary) !important;
+}
+  
+.repeat-add {
+    cursor: pointer;
+}
+
+.field {
+    margin-bottom: 0.5rem;
+}
+
+.group-field {
+    margin-top: 1em;
+}
+
+.display-field {
+    margin-top: 1em;
+    margin-bottom: 0;
+}
