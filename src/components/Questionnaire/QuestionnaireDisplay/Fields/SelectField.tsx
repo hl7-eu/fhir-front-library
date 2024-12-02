@@ -6,6 +6,7 @@ import { faXmark, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Form } from 'react-bootstrap';
 import FieldConfig from './FieldConfig';
+import { QuestionnaireItemAnswerOption } from 'fhir/r5';
 
 const SelectField: React.FC<FieldConfig> = (configs) => {
 
@@ -53,7 +54,7 @@ const SelectField: React.FC<FieldConfig> = (configs) => {
      */
     function addAnswer(): void {
         var newForm = { ...configs.form };
-        newForm[configs.field.id] = [...configs.form[configs.field.id], ''];
+        newForm[configs.field.id] = [...configs.form[configs.field.id], configs.field.initialValue];
         configs.updateForm(newForm);
     }
 
@@ -68,20 +69,24 @@ const SelectField: React.FC<FieldConfig> = (configs) => {
         configs.updateForm(newForm);
     }
 
-    /**
-     * Reset if disabled
-     */
-    // React.useEffect(() => {
-    //     if (configs.field.disabled(configs.form) || configs.form[configs.field.id][0] === '') {
-    //         var newForm = { ...configs.form };
-    //         newForm[configs.field.id] = [''];
-    //         configs.updateForm(newForm);
-    //     }
-    // }, [configs.form]);
-
     ////////////////////////////////
     //          Content           //
     ////////////////////////////////
+
+    /**
+     * Get all options for the select
+     * 
+     * @returns the options as HTML element.
+     */
+    function getOptions() {
+        if (valueSet?.length > 0) {
+            return valueSet.map(value => getOptionFromCode(value));
+        } else if (configs.field.answerOption?.length > 0) {
+            return configs.field.answerOption.map(option => getOptionFromOption(option));
+        } else {
+            return <></>
+        }
+    }
 
     /**
      * Transform codes into option to display in the form.
@@ -89,8 +94,26 @@ const SelectField: React.FC<FieldConfig> = (configs) => {
      * @param code the code to display as an option.
      * @returns the option HTML element.
      */
-    function getOption(code: SimpleCode) {
+    function getOptionFromCode(code: SimpleCode) {  
         return <option value={code.system + '|' + code.code}>{code.display ?? code.code}</option>;
+    }
+
+    /**
+     * Transform QuestionnaireOptions into option to display in the form.
+     * 
+     * @param option the code to display as an option.
+     * @returns the option HTML element.
+     */
+    function getOptionFromOption(option: QuestionnaireItemAnswerOption) {
+        if (option.valueCoding) {
+            return <option value={option.valueCoding.system + '|' + option.valueCoding.code} selected={option.initialSelected}>
+                    {option.valueCoding.display ?? option.valueCoding.code}
+                </option>;
+        } else {
+            //TODO Support reference options
+            var value = option.valueInteger ?? option.valueTime ?? option.valueDate ?? option.valueString;
+            return <option value={value}>{value}</option>;
+        }
     }
 
     return (
@@ -112,7 +135,7 @@ const SelectField: React.FC<FieldConfig> = (configs) => {
                         {/* TODO See what we do about that ?? */}
                         -- {configs.field.placeholder} --
                     </option>
-                    {valueSet.map(value => getOption(value))}
+                    {getOptions()}
                 </Form.Select>
                 <Form.Control.Feedback type="invalid">
                     {/* TODO Translate */}
@@ -141,7 +164,7 @@ const SelectField: React.FC<FieldConfig> = (configs) => {
                                         {/* TODO See what we do about that ?? */}
                                         -- {configs.field.placeholder} --
                                     </option>
-                                    {valueSet.map(value => getOption(value))}
+                                    {getOptions()}
                                 </Form.Select>
                                 {index !== 0 &&
                                     <FontAwesomeIcon

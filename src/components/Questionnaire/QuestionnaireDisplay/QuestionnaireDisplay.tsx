@@ -122,15 +122,17 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
             type: item.type,
             placeholder: item.text,
             advancedRendering: getAdvancedRenderingFromExtensions(item.extension),
+            hidden: isHidden(item.extension),
             disabled: (form) => !getFieldEnabled(item)(form),
             hideOnDisabled: !item.disabledDisplay || item.disabledDisplay === "hidden",
             readOnly: item.readOnly ?? false,
             required: item.required ?? false,
             repeat: item.repeats ?? false,
             maxLength: item.maxLength,
-            initialValue: getFieldInitialValue(item.linkId, item.type),
+            initialValue: getFieldInitialValue(item),
             subField: [],
             answerValueSet: item.answerValueSet,
+            answerOption: item.answerOption,
         } as Field;
         fieldList.push(field);
         if (field.type !== 'group' && item.item && item.item.length > 0) {
@@ -170,14 +172,25 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
         return style;
     }
 
+    function isHidden(extensions: Extension[] | undefined): boolean {
+        if (!extensions) {
+            return false;
+        }
+        var isHidden = extensions.find(extension => extension.url === 'http://hl7.org/fhir/StructureDefinition/questionnaire-hidden')?.valueBoolean;
+        return isHidden ?? false;
+    }
+
     /**
      * Extract initial value of the field from the QuestionnaireResponse resource handed as props.
      * 
-     * @param id    the field ID
-     * @param type  the field type
+     * @param item    the Questionnaire item for the field
      * @returns the initial value for the field
      */
-    function getFieldInitialValue(id: string, type: string): string {
+    function getFieldInitialValue(item: QuestionnaireItem): string {
+
+        const id = item.linkId;
+        const type = item.type as string;
+
         //TODO how do we handle repeating response ?
         var answers = [] as QuestionnaireResponseItemAnswer[];
         if (configs.questionnaireResponse.item) {
@@ -186,18 +199,30 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
         }
         if (answers.length > 0) {
             switch (type) {
-                case 'group':
-                case 'display':
-                case 'question':
-                //TODO Banish Question ??
-                case 'attachment':
-                //TODO
-                case 'reference':
-                //TODO
+                case 'choice':
+                    if (item.answerValueSet != undefined) {
+                        return (answers[0].valueCoding 
+                            ? answers[0].valueCoding.system + '|' + answers[0].valueCoding.code 
+                            : '') as string;
+                    } else if (item.answerOption !== undefined && item.answerOption.length > 0) {
+                        const option = item.answerOption[0];
+                        if (option.valueCoding) {
+                            return (answers[0].valueCoding 
+                                ? answers[0].valueCoding.system + '|' + answers[0].valueCoding.code 
+                                : '') as string;
+                        } if (option.valueInteger) {
+                            return (answers[0].valueInteger ?? '') as string;
+                        } if (option.valueDate) {
+                            return (answers[0].valueDate ?? '') as string;
+                        } if (option.valueTime) {
+                            return (answers[0].valueTime ?? '') as string;
+                        } if (option.valueString) {
+                            return (answers[0].valueString ?? '') as string;
+                        }
+                        //TODO Reference
+                    }
                 case 'quantity':
-                    //TODO
-                    console.log("Cannot find initial value for field [%s] of type [%s]", id, type);
-                    break;
+                    return (answers[0].valueQuantity ? answers[0].valueQuantity.value + "|" + answers[0].valueQuantity.unit : '') as string;
                 case 'decimal':
                     return (answers[0].valueDecimal ?? '') as string;
                 case 'integer':
@@ -218,8 +243,39 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
                     return (answers[0].valueTime ?? '') as string;
                 case 'text':
                 case 'string':
+                case 'group':
+                case 'display':
+                case 'question':
+                //TODO Banish Question ??
+                case 'attachment':
+                //TODO
+                case 'reference':
+                //TODO
                 default:
                     return answers[0].valueString ?? '';
+            }
+        } else {
+            switch (type) {
+                case 'choice': 
+                    if (item.answerValueSet != undefined) {
+                        //TODO
+                        return '';
+                    } else if ((item.answerOption?.length ?? 0) > 0) {
+                        const initialSelectedOption = item.answerOption?.find(option => option.initialSelected);
+                        if (initialSelectedOption) {
+                            if (initialSelectedOption.valueCoding) {
+                                return initialSelectedOption.valueCoding.system + '|' + initialSelectedOption.valueCoding.code;
+                            } else {
+                                //TODO Support reference options
+                                var value = initialSelectedOption.valueInteger ?? initialSelectedOption.valueTime ?? initialSelectedOption.valueDate ?? initialSelectedOption.valueString;
+                                return value as string;
+                            }
+                        }
+                        return '';
+                    } else {
+                        return ''
+                    }
+                //TODO Same for other types of fields
             }
         }
         return '';
@@ -393,103 +449,62 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
                 var type = getFieldType(key, fields);
                 switch (type) {
                     case 'date':
-                        item.answer = value.map(value => {
-                            if (value === '') {
-                                return undefined;
-                            }
-                            return {
-                                valueDate: value
-                            } as QuestionnaireResponseItemAnswer;
-                        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+                        item.answer = mapToDateAnswer(value);
                         break;
                     case 'decimal':
-                        item.answer = value.map(value => {
-                            if (value === '') {
-                                return undefined;
-                            }
-                            return {
-                                valueDecimal: parseFloat(value)
-                            } as QuestionnaireResponseItemAnswer;
-                        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+                        item.answer = mapToDecimalAnswer(value);
                         break;
                     case 'integer':
-                        item.answer = value.map(value => {
-                            if (value === '') {
-                                return undefined;
-                            }
-                            return {
-                                valueInteger: parseInt(value)
-                            } as QuestionnaireResponseItemAnswer;
-                        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+                        item.answer = mapToIntegerAnswer(value);
                         break;
                     case 'url':
-                        item.answer = value.map(value => {
-                            if (value === '') {
-                                return undefined;
-                            }
-                            return {
-                                valueUri: value
-                            } as QuestionnaireResponseItemAnswer;
-                        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+                        item.answer = mapToUrlAnswer(value);
                         break;
                     case 'boolean':
-                        item.answer = value.map(value => {
-                            if (value === '') {
-                                return undefined;
-                            }
-                            return {
-                                valueBoolean: value === 'true'
-                            } as QuestionnaireResponseItemAnswer;
-                        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+                        item.answer = mapToBooleanAnswer(value);
                         break;
                     case 'text':
                     case 'string':
-                        item.answer = value.map(value => {
-                            if (value === '') {
-                                return undefined;
-                            }
-                            return {
-                                valueString: value
-                            } as QuestionnaireResponseItemAnswer;
-                        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+                        item.answer = mapToStringAnswer(value);
                         break;
                     case 'coding':
-                        item.answer = value.map(value => {
-                            if (value === '') {
-                                return undefined;
-                            }
-                            var splittedValue = value.split('|');
-                            return {
-                                valueCoding: {
-                                    system: splittedValue[0],
-                                    code: splittedValue[1]
-                                }
-                            } as QuestionnaireResponseItemAnswer;
-                        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+                        item.answer = mapToCodingAnswer(value);
                         break;
                     case 'dateTime':
-                        item.answer = value.map(value => {
-                            if (value === '') {
-                                return undefined;
-                            }
-                            return {
-                                valueDateTime: value + ':00'
-                            } as QuestionnaireResponseItemAnswer;
-                        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+                        item.answer = mapToDateTimeAnswer(value);
                         break;
                     case 'time':
-                        item.answer = value.map(value => {
-                            if (value === '') {
-                                return undefined;
+                        item.answer = mapToTimeAnswer(value);
+                        break;
+                    case 'quantity':
+                        item.answer = mapToQuantityAnswer(value);
+                        break;
+                    case 'choice': 
+                        if (getField(key, fields)?.answerValueSet) {
+                            item.answer = mapToCodingAnswer(value);
+                        } else if (getField(key, fields) && (getField(key, fields)?.answerOption.length ?? 0) > 0) {
+                            const firstOption = getField(key, fields)?.answerOption[0];
+                            // It is implied that all options have the same type here
+                            if (firstOption?.valueInteger) {
+                                item.answer = mapToIntegerAnswer(value);
+                            } else if (firstOption?.valueDate){
+                                item.answer = mapToDateAnswer(value);
+                            } else if (firstOption?.valueTime){
+                                item.answer = mapToTimeAnswer(value);
+                            } else if (firstOption?.valueString){
+                                item.answer = mapToStringAnswer(value);
+                            } else if (firstOption?.valueCoding){
+                                item.answer = mapToCodingAnswer(value);
+                            } else if (firstOption?.valueReference){
+                                console.log("Cannot convert answers for field [%s] of type [%s]", key, "reference (option)");
                             }
-                            return {
-                                valueTime: value
-                            } as QuestionnaireResponseItemAnswer;
-                        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+                            break;
+                        } else {
+                            item.answer = undefined;
+                        }
                         break;
                     case 'attachment':
                     case 'reference':
-                    case 'quantity':
                     default:
                         //TODO
                         console.log("Cannot convert answers for field [%s] of type [%s]", key, type);
@@ -498,6 +513,134 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
             }
         }
         return questionnaireResponse;
+    }
+
+    function mapToCodingAnswer(value: string[]): QuestionnaireResponseItemAnswer[] | undefined {
+        const answer = value.map(value => {
+            if (value === '') {
+                return undefined;
+            }
+            var splittedValue = value.split('|');
+            return {
+                valueCoding: {
+                    system: splittedValue[0],
+                    code: splittedValue[1]
+                }
+            } as QuestionnaireResponseItemAnswer;
+        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v)
+        return answer.length > 0 ? answer : undefined;
+    }
+
+    function mapToIntegerAnswer(value: string[]): QuestionnaireResponseItemAnswer[] | undefined {
+        const answer = value.map(value => {
+            if (value === '') {
+                return undefined;
+            }
+            return {
+                valueInteger: parseInt(value)
+            } as QuestionnaireResponseItemAnswer;
+        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+        return answer.length > 0 ? answer : undefined;
+    }
+
+    function mapToDateAnswer(value: string[]): QuestionnaireResponseItemAnswer[] | undefined {
+        const answer = value.map(value => {
+            if (value === '') {
+                return undefined;
+            }
+            return {
+                valueDate: value
+            } as QuestionnaireResponseItemAnswer;
+        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+        return answer.length > 0 ? answer : undefined;
+    }
+
+    function mapToTimeAnswer(value: string[]): QuestionnaireResponseItemAnswer[] | undefined {
+        const answer = value.map(value => {
+            if (value === '') {
+                return undefined;
+            }
+            return {
+                valueTime: value
+            } as QuestionnaireResponseItemAnswer;
+        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+        return answer.length > 0 ? answer : undefined;
+    }
+
+    function mapToStringAnswer(value: string[]): QuestionnaireResponseItemAnswer[] | undefined {
+        const answer = value.map(value => {
+            if (value === '') {
+                return undefined;
+            }
+            return {
+                valueString: value
+            } as QuestionnaireResponseItemAnswer;
+        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+        return answer.length > 0 ? answer : undefined;
+    }
+
+    function mapToDecimalAnswer(value: string[]): QuestionnaireResponseItemAnswer[] | undefined {
+        const answer = value.map(value => {
+            if (value === '') {
+                return undefined;
+            }
+            return {
+                valueDecimal: parseFloat(value)
+            } as QuestionnaireResponseItemAnswer;
+        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+        return answer.length > 0 ? answer : undefined;
+    }
+
+    function mapToUrlAnswer(value: string[]): QuestionnaireResponseItemAnswer[] | undefined {
+        const answer = value.map(value => {
+            if (value === '') {
+                return undefined;
+            }
+            return {
+                valueUri: value
+            } as QuestionnaireResponseItemAnswer;
+        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+        return answer.length > 0 ? answer : undefined;
+    }
+
+    function mapToBooleanAnswer(value: string[]): QuestionnaireResponseItemAnswer[] | undefined {
+        const answer = value.map(value => {
+            if (value === '') {
+                return undefined;
+            }
+            return {
+                valueBoolean: value === 'true'
+            } as QuestionnaireResponseItemAnswer;
+        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+        return answer.length > 0 ? answer : undefined;
+    }
+
+    function mapToDateTimeAnswer(value: string[]): QuestionnaireResponseItemAnswer[] | undefined {
+        const answer = value.map(value => {
+            if (value === '') {
+                return undefined;
+            }
+            return {
+                valueDateTime: value + ':00'
+            } as QuestionnaireResponseItemAnswer;
+        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+        return answer.length > 0 ? answer : undefined;
+    }
+
+    function mapToQuantityAnswer(value: string[]): QuestionnaireResponseItemAnswer[] | undefined {
+        const answer = value.map(value => {
+            if (value === '') {
+                return undefined;
+            }
+            var splittedValue = value.split('|');
+            return {
+                valueQuantity: {
+                    value: parseFloat(splittedValue[0]),
+                    unit: splittedValue[1]
+                }
+            } as QuestionnaireResponseItemAnswer;
+        }).filter((v): v is QuestionnaireResponseItemAnswer => !!v);
+        return answer.length > 0 ? answer : undefined;
     }
 
     function getItemByLinkId(linkId: string, items: QuestionnaireResponseItem[]): QuestionnaireResponseItem | undefined {
@@ -517,6 +660,17 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
                 return field.type;
             } else if (field.subField && field.subField.length > 0) {
                 return getFieldType(linkId, field.subField);
+            }
+            return undefined;
+        }).find(item => item !== undefined);
+    }
+
+    function getField(linkId: string, fieldList: Field[]): Field | undefined {
+        return fieldList.map((field: Field) => {
+            if (field.id === linkId) {
+                return field;
+            } else if (field.subField && field.subField.length > 0) {
+                return getField(linkId, field.subField);
             }
             return undefined;
         }).find(item => item !== undefined);

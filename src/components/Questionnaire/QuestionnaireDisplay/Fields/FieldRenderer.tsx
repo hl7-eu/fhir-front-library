@@ -11,7 +11,7 @@ import DecimalField from "./DecimalField";
 import TextField from "./TextField";
 import { ValueSetLoader } from "../../../../services";
 import SelectField from "./SelectField";
-import { Field } from ".";
+import { Field, QuantityField } from ".";
 import DateTimeField from "./DateTimeField";
 import TimeField from "./TimeField";
 
@@ -33,6 +33,9 @@ export class FieldRenderer {
             updateForm: (form: { [key: string]: string[] }) => void,
             valueSetLoader: ValueSetLoader
         ): React.JSX.Element {
+        if (field.hidden) {
+            return <></>
+        }
         // TODO allowed for valueSet or Options : coding, decimal, integer, date, dateTime, time, string or quantity
         switch (field.type) {
             case 'group':
@@ -61,16 +64,17 @@ export class FieldRenderer {
             //TODO This is a dirty fix for R4 support.
             case 'open-choice': // TODO Open-choice and coding with answerConstraint
             case 'choice':
-                if (field.answerValueSet !== undefined) {
+                if (field.answerValueSet !== undefined || field.answerOption != undefined) {
                     return <SelectField field={field} form={form} updateForm={updateForm} valueSetLoader={valueSetLoader}/>
                 } else {
-                    console.log("Coding field type shall define an answerValueSet element (field [%s])", field.type, field.id);
+                    console.log("Coding field type shall define an answerValueSet element or an answerOption element (field [%s])", field.type, field.id);
                     return <></>;
                 }
+            case 'quantity':
+                return <QuantityField field={field} form={form} updateForm={updateForm} valueSetLoader={valueSetLoader}/>;
             case 'time':
             case 'attachment':
             case 'reference':
-            case 'quantity':
             case 'question':
             default:
                 console.log("Unsupported field type [%s] for field [%s]", field.type, field.id);

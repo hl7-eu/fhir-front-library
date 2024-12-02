@@ -1,4 +1,5 @@
 // Component
+import { QuestionnaireItemAnswerOption } from 'fhir/r5';
 import { ValueSetLoader } from '../../../../services';
 
 // Interface describing a field in the questionnaire
@@ -9,6 +10,7 @@ export interface Field {
     type: ('group' | 'display' | 'question' | 'boolean' | 'decimal' | 'integer' | 'date' | 'dateTime' | 'time' | 'string' | 'text' | 'url' | 'coding' | 'attachment' | 'reference' | 'quantity' | string);
     placeholder?: string;
     advancedRendering: { [key: string]: string };
+    hidden: boolean;
     disabled: (form: { [key: string]: string[] }) => boolean;
     hideOnDisabled: boolean;
     readOnly: boolean;
@@ -19,6 +21,7 @@ export interface Field {
     initialValue: string;
     subField: Field[];
     answerValueSet?: string;
+    answerOption: QuestionnaireItemAnswerOption[];
 }
 
 /**

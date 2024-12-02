@@ -8,6 +8,7 @@ export { default as DecimalField } from "./DecimalField";
 export { default as TextField } from "./TextField";
 export { default as SelectField } from "./SelectField";
 export { default as BooleanField } from "./BooleanField";
+export { default as QuantityField } from "./QuantityField";
 export { default as FieldConfig } from "./FieldConfig";
 export { Field } from "./FieldConfig";
 export { default as FieldRenderer } from "./FieldRenderer";

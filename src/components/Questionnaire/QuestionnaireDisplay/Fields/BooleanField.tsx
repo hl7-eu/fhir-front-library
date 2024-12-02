@@ -61,7 +61,6 @@ const BooleanField: React.FC<FieldConfig> = (configs) => {
                     type={configs.field.required ? 'radio' : 'checkbox'}
                     required={configs.field.required}
                     disabled={configs.field.readOnly || configs.field.disabled(configs.form)}
-                    defaultChecked={configs.field.initialValue === 'false'}
                     checked={isFalse}
                     onChange={handleChange}
                 />
@@ -73,7 +72,6 @@ const BooleanField: React.FC<FieldConfig> = (configs) => {
                     type={configs.field.required ? 'radio' : 'checkbox'}
                     required={configs.field.required}
                     disabled={configs.field.readOnly || configs.field.disabled(configs.form)}
-                    defaultChecked={configs.field.initialValue === 'true'}
                     checked={isTrue}
                     onChange={handleChange}
                 />
