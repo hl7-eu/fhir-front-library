@@ -1,0 +1,14 @@
+.dropdownMenu {
+    min-width: 3.5rem !important;
+}
+
+.tableContent {
+    text-align: justify;
+    table-layout: fixed;
+}
+
+.cellContent {
+    white-space: normal;
+    word-break: break-all;
+    --tablet-width: auto;
+}
