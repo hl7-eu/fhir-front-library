@@ -4,17 +4,11 @@
 .warning-tag,
 .suspended-tag,
 .unknown-tag {
-    padding: 0.2rem 0.5rem 0.2rem 0.5rem;
     color: white;
     border-radius: 0.2rem;
-    text-align: center;
     font-size: 0.75rem;
-    font-weight: bold;
     width: 10rem;
     height: 1.6rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 .success-tag {

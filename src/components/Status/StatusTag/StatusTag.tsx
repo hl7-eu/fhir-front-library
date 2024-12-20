@@ -64,7 +64,7 @@ const getClassName = (status: keyof typeof StatusFlavor): string => {
 const StatusTag: React.FC<StatusTagProps> = ({ message, flavor }) => {
     return (
         <div>
-            <div className={getClassName(flavor)}>
+            <div className={'d-flex justify-content-center align-items-center text-center fw-bold ' + getClassName(flavor)}>
                 {message.toUpperCase()}
             </div>
         </div>

@@ -1,13 +1,12 @@
 //React
 import React from "react";
-//Style
-import "./Loader.css";
 
 const Loader = () => {
-  return <div className="loader">
+  return <div className="d-flex w-100 h-100 align-items-center justify-content-center position-absolute">
     <div
       className="spinner-border"
-      role="status">
+      role="status"
+    >
     </div>
   </div>
 };

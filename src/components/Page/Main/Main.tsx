@@ -7,7 +7,7 @@ import "./Main.css";
 
 const Main: FunctionComponent<{ children?: ReactElement<any, string | JSXElementConstructor<any>> | undefined; loading?: boolean; }> = (props) => {
 
-    return <div className="main">
+    return <div className="d-flex flex-grow-1 m-auto position-relative main">
         {props.loading ?
             <>
                 <Loader />
