@@ -31,7 +31,8 @@ export interface PageConfiguration {
 const Page: FunctionComponent<PageConfiguration> = (configs) => {
 
     if (configs.needsLogin && configs.isAuthenticated && !configs.isAuthenticated() && configs.doLogin) {
-        return <div>{configs.doLogin() ?? <></>}</div>;
+        configs.doLogin();
+        return <div></div>;
     } else {
         return <div className="page">
             <NavigationBar
