@@ -681,19 +681,19 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
     ////////////////////////////////
 
     return (
-        <>
+        <div className='d-flex flex-column gap-1'>
             <Title
                 level={2}
                 content={title}
             />
-            <Form noValidate validated={validated} onSubmit={handleSubmit}>
+            <Form noValidate validated={validated} onSubmit={handleSubmit} className='d-flex flex-column gap-4'>
                 <Form.Group>
                     {fields.map(field => FieldRenderer.getFieldComponent(field, form, (form) => setForm(massageFormForDisabledFields(fields, form)), configs.valueSetLoader))}
                 </Form.Group>
-                <Form.Group className="col">
+                <Form.Group className="d-flex flex-wrap align-items-start gap-4">
                     <Button
                         className="button"
-                        variant="danger"
+                        variant="primary"
                         type='submit'
                     >
                         {
@@ -715,7 +715,7 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
                     </Button>
                 </Form.Group>
             </Form>
-        </>
+        </div>
     );
 };
 

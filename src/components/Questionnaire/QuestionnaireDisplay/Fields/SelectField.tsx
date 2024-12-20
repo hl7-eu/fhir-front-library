@@ -123,7 +123,7 @@ const SelectField: React.FC<FieldConfig> = (configs) => {
                     <b>{configs.field.prefix && configs.field.prefix} </b>
                     {configs.field.label} {configs.field.required && "* "}:
                 </Form.Label>
-                <Form.Select className="select"
+                <Form.Select
                     value={configs.form[configs.field.id][0]}
                     style={configs.field.advancedRendering}
                     disabled={configs.field.readOnly || configs.field.disabled(configs.form)}
@@ -152,7 +152,7 @@ const SelectField: React.FC<FieldConfig> = (configs) => {
                     {configs.form[configs.field.id].map((value, index, array) => {
                         return <Form.Group key={configs.field.id + index}>
                             <div className='repeated'>
-                                <Form.Select className="select"
+                                <Form.Select
                                     name={configs.field.id + index}
                                     value={value}
                                     style={configs.field.advancedRendering}
