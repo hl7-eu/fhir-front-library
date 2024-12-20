@@ -41,12 +41,8 @@
     top: 5rem;
     width: 100%;
     overflow: auto;
-    background-color: var(--lightGray);
+    background-color: var(--bs-gray-100);
     z-index: 2;
-  }
-
-  .full-width {
-    width: 100%;
   }
 
   .custom-dropdown {

@@ -75,7 +75,7 @@ const NavigationBar: FunctionComponent<NavigationBarConfig & { language?: (key: 
                 </a>
             </li>
         } else {
-            return <li className="nav-item dropdown full-width">
+            return <li className="nav-item dropdown w-100">
                 <a className="nav-link dropdown-toggle"
                     role="button"
                     id="navbarDropdown"
