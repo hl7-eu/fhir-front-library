@@ -1,0 +1,44 @@
+.application-menu {
+    width: 3rem;
+}
+
+.landmark-icon {
+    width: 1.70rem;
+    height: auto;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: var(--white);
+    min-width: 10rem;
+    box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+    border-radius: 0.4rem;
+    padding: 0.5rem;
+    z-index: 3;
+}
+
+.application-logo {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+.hover-icon:hover {
+    background-color: var(--bs-gray-300);
+    border-radius: 3rem;
+}
+
+/* Classes for disabled apps */
+.disabled-link {
+    cursor: default;
+} 
+.disabled-logo {
+    opacity: 0.2;
+    border-radius: 50%;
+    cursor: default;
+    object-fit: cover;
+}

@@ -1,0 +1,36 @@
+.success-tag,
+.info-tag,
+.error-tag,
+.warning-tag,
+.suspended-tag,
+.unknown-tag {
+    color: white;
+    border-radius: 0.2rem;
+    font-size: 0.75rem;
+    width: 10rem;
+    height: 1.6rem;
+}
+
+.success-tag {
+    background-color: var(--bs-success);
+}
+
+.info-tag {
+    background-color: var(--bs-info);
+}
+
+.error-tag {
+    background-color: var(--bs-danger);
+}
+
+.warning-tag {
+    background-color: var(--bs-warning);
+}
+
+.suspended-tag {
+    background-color: var(--bs-yellow);
+}
+
+.unknown-tag {
+    background-color: var(--bs-secondary);
+}

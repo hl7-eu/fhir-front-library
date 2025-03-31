@@ -1,0 +1,55 @@
+.navbar {
+  display: flex;
+}
+
+.nav-link.dropdown-toggle,
+.navbar-nav .nav-link.active {
+  color: var(--secondary-color) !important;
+}
+
+.navbar-logo {
+  width: auto;
+  height: 4rem;
+  cursor: pointer;
+}
+
+.login-icon {
+  width: 2rem;
+}
+
+.login-button {
+  min-width: 0 !important;
+  margin-left: 2rem;
+}
+
+.dropdown-item {
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: var(--bs-gray-300);
+}
+
+.nav-link:hover {
+  background-color: var(--bs-gray-300);
+}
+
+@media screen and (max-width: 991px) {
+
+  .navbar-collapse {
+    position: fixed;
+    top: 5rem;
+    width: 100%;
+    overflow: auto;
+    background-color: var(--bs-gray-100);
+    z-index: 2;
+  }
+
+  .custom-dropdown {
+    max-width: 5rem;
+  }
+
+  .login-button {
+    margin: 1rem 0 0 0;
+  }
+}
