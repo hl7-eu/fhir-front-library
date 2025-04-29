@@ -50,13 +50,13 @@ export const Questionnaire2: StoryObj<QuestionnaireProps> = {
     },
 };
 
-export const Questionnaire3: StoryObj<QuestionnaireProps> = {
+export const QuestionnaireReadOnly: StoryObj<QuestionnaireProps> = {
     ...Template,
     args: {
         dataUrl: 'https://integ.fyrstain.com/r5-data',
         sdcUrl: 'https://integ.fyrstain.com/r5/questionnaire-processor',
         terminologyUrl: 'https://integ.fyrstain.com/r5-data',
-        questionnaireUrl: "http://fyrstain.com/fhir/R5/socle-ig/Questionnaire/EXP-QuestionnaireEnableWhen",
+        questionnaireUrl: "http://fyrstain.com/fhir/R5/socle-ig/Questionnaire/EXP-QuestionnairePatientSimplesFields",
         hideButtons: true,
         readOnly: true,
         onSubmit: () => { },
