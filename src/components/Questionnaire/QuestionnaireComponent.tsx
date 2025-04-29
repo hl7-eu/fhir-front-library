@@ -23,6 +23,8 @@ export interface QuestionnaireProps {
     terminologyUrl: string;
     // The url of the questionnaire
     questionnaireUrl: string;
+    // Hide the submit and reset buttons in the Questionnaire component
+    hideButtons?: boolean;
     // Function to call when you submit the form
     onSubmit: (questionnaireResponse: QuestionnaireResponse, bundle: Bundle) => void;
     // Function to call when an error occurs
@@ -73,7 +75,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireProps> = (configs) => {
                     searchParams: { url: configs.questionnaireUrl },
                 });
                 setQuestionnaire(searchQuestionnaireResponse.entry[0].resource);
-                
+
                 const populateResponse = await sdcClient.operation({
                     name: "populate",
                     resourceType: 'Questionnaire',
@@ -109,15 +111,15 @@ const QuestionnaireComponent: React.FC<QuestionnaireProps> = (configs) => {
                         resource: questionnaireResponse
                     }
                 ]
-            }, 
+            },
         })
-        .then(response => {
-            if (response.resourceType !== 'Bundle') {
-                throw Error(response.statusText);
-            }
-            configs.onSubmit(questionnaireResponse, response as Bundle);
-        })
-        .catch(configs.onError);
+            .then(response => {
+                if (response.resourceType !== 'Bundle') {
+                    throw Error(response.statusText);
+                }
+                configs.onSubmit(questionnaireResponse, response as Bundle);
+            })
+            .catch(configs.onError);
     }
 
     ////////////////////////////////
@@ -131,6 +133,7 @@ const QuestionnaireComponent: React.FC<QuestionnaireProps> = (configs) => {
             questionnaire={questionnaire ?? {} as Questionnaire}
             questionnaireResponse={questionnaireResponse ?? {} as QuestionnaireResponse}
             valueSetLoader={valueSetLoader}
+            hideButtons={configs.hideButtons ?? false}
             onSubmit={(questionnaireResponse) => { extractAndSubmit(questionnaireResponse) }}
             onError={configs.onError}
         />

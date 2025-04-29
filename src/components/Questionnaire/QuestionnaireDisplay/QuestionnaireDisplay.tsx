@@ -13,20 +13,20 @@ import { ValueSetLoader } from '../../../services';
 export interface QuestionnaireDisplayProps {
     // Function to translate the text in the application
     language?: (key: string) => string;
-
     // Label of the primary button (Default to validate)
     submitButtonLabel?: string;
+    // Function to call when you submit the form
     onSubmit: (response: QuestionnaireResponse) => void;
     // Label of the Reset button (default to Reset)
     resetButtonLabel?: string;
-
     //The Questionnaire to display
     questionnaire: Questionnaire
     //The QuestionnaireResponse to display
     questionnaireResponse: QuestionnaireResponse
-
+    // The ValueSetLoader to use to load the value sets
     valueSetLoader: ValueSetLoader;
-
+    // Hide the buttons (default to false)
+    hideButtons?: boolean;
     // Function to call when an error occurs
     onError: () => void;
 }
@@ -98,7 +98,7 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
         fields.forEach(field => {
             if (field.disabled(form)) {
                 var newValue = [field.initialValue];
-                console.log ("reseting field : " + field.id + " to " + field.initialValue);
+                console.log("reseting field : " + field.id + " to " + field.initialValue);
                 form = { ...form, [field.id]: newValue };
             }
             if (field.subField) {
@@ -201,14 +201,14 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
             switch (type) {
                 case 'choice':
                     if (item.answerValueSet != undefined) {
-                        return (answers[0].valueCoding 
-                            ? answers[0].valueCoding.system + '|' + answers[0].valueCoding.code 
+                        return (answers[0].valueCoding
+                            ? answers[0].valueCoding.system + '|' + answers[0].valueCoding.code
                             : '') as string;
                     } else if (item.answerOption !== undefined && item.answerOption.length > 0) {
                         const option = item.answerOption[0];
                         if (option.valueCoding) {
-                            return (answers[0].valueCoding 
-                                ? answers[0].valueCoding.system + '|' + answers[0].valueCoding.code 
+                            return (answers[0].valueCoding
+                                ? answers[0].valueCoding.system + '|' + answers[0].valueCoding.code
                                 : '') as string;
                         } if (option.valueInteger) {
                             return (answers[0].valueInteger ?? '') as string;
@@ -232,8 +232,8 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
                 case 'boolean':
                     return (answers[0].valueBoolean ?? '') as string;
                 case 'coding':
-                    return (answers[0].valueCoding 
-                        ? answers[0].valueCoding.system + '|' + answers[0].valueCoding.code 
+                    return (answers[0].valueCoding
+                        ? answers[0].valueCoding.system + '|' + answers[0].valueCoding.code
                         : '') as string;
                 case 'date':
                     return (answers[0].valueDate ?? '') as string;
@@ -256,7 +256,7 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
             }
         } else {
             switch (type) {
-                case 'choice': 
+                case 'choice':
                     if (item.answerValueSet != undefined) {
                         //TODO
                         return '';
@@ -479,7 +479,7 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
                     case 'quantity':
                         item.answer = mapToQuantityAnswer(value);
                         break;
-                    case 'choice': 
+                    case 'choice':
                         if (getField(key, fields)?.answerValueSet) {
                             item.answer = mapToCodingAnswer(value);
                         } else if (getField(key, fields) && (getField(key, fields)?.answerOption.length ?? 0) > 0) {
@@ -487,15 +487,15 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
                             // It is implied that all options have the same type here
                             if (firstOption?.valueInteger) {
                                 item.answer = mapToIntegerAnswer(value);
-                            } else if (firstOption?.valueDate){
+                            } else if (firstOption?.valueDate) {
                                 item.answer = mapToDateAnswer(value);
-                            } else if (firstOption?.valueTime){
+                            } else if (firstOption?.valueTime) {
                                 item.answer = mapToTimeAnswer(value);
-                            } else if (firstOption?.valueString){
+                            } else if (firstOption?.valueString) {
                                 item.answer = mapToStringAnswer(value);
-                            } else if (firstOption?.valueCoding){
+                            } else if (firstOption?.valueCoding) {
                                 item.answer = mapToCodingAnswer(value);
-                            } else if (firstOption?.valueReference){
+                            } else if (firstOption?.valueReference) {
                                 console.log("Cannot convert answers for field [%s] of type [%s]", key, "reference (option)");
                             }
                             break;
@@ -690,30 +690,32 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
                 <Form.Group>
                     {fields.map(field => FieldRenderer.getFieldComponent(field, form, (form) => setForm(massageFormForDisabledFields(fields, form)), configs.valueSetLoader))}
                 </Form.Group>
-                <Form.Group className="d-flex flex-wrap align-items-start gap-4">
-                    <Button
-                        className="button"
-                        variant="primary"
-                        type='submit'
-                    >
-                        {
-                            //TODO if we have a language, dont we want to pass keys instead of labels ?..
-                            configs.submitButtonLabel ||
-                            (configs.language ?
-                                configs.language('button.validate')
-                                : 'Validate')}
-                    </Button>
-                    <Button
-                        className="button"
-                        variant="secondary"
-                        onClick={() => onReset()}
-                    >
-                        {configs.resetButtonLabel ||
-                            (configs.language ?
-                                configs.language('button.reset')
-                                : 'Reset')}
-                    </Button>
-                </Form.Group>
+                {!configs.hideButtons &&
+                    <Form.Group className="d-flex flex-wrap align-items-start gap-4">
+                        <Button
+                            className="button"
+                            variant="primary"
+                            type='submit'
+                        >
+                            {
+                                //TODO if we have a language, dont we want to pass keys instead of labels ?..
+                                configs.submitButtonLabel ||
+                                (configs.language ?
+                                    configs.language('button.validate')
+                                    : 'Validate')}
+                        </Button>
+                        <Button
+                            className="button"
+                            variant="secondary"
+                            onClick={() => onReset()}
+                        >
+                            {configs.resetButtonLabel ||
+                                (configs.language ?
+                                    configs.language('button.reset')
+                                    : 'Reset')}
+                        </Button>
+                    </Form.Group>
+                }
             </Form>
         </div>
     );
