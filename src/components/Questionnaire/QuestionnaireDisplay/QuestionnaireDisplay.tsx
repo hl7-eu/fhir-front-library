@@ -27,6 +27,8 @@ export interface QuestionnaireDisplayProps {
     valueSetLoader: ValueSetLoader;
     // Hide the buttons (default to false)
     hideButtons?: boolean;
+    // Disable all the form fields (default to false)
+    readOnly?: boolean;
     // Function to call when an error occurs
     onError: () => void;
 }
@@ -123,8 +125,8 @@ const QuestionnaireDisplay: React.FC<QuestionnaireDisplayProps> = (configs) => {
             placeholder: item.text,
             advancedRendering: getAdvancedRenderingFromExtensions(item.extension),
             hidden: isHidden(item.extension),
-            disabled: (form) => !getFieldEnabled(item)(form),
-            hideOnDisabled: !item.disabledDisplay || item.disabledDisplay === "hidden",
+            disabled: (form) => configs.readOnly || !getFieldEnabled(item)(form),
+            hideOnDisabled: configs.readOnly ? false : (!item.disabledDisplay || item.disabledDisplay === "hidden"),
             readOnly: item.readOnly ?? false,
             required: item.required ?? false,
             repeat: item.repeats ?? false,

@@ -58,6 +58,7 @@ export const Questionnaire3: StoryObj<QuestionnaireProps> = {
         terminologyUrl: 'https://integ.fyrstain.com/r5-data',
         questionnaireUrl: "http://fyrstain.com/fhir/R5/socle-ig/Questionnaire/EXP-QuestionnaireEnableWhen",
         hideButtons: true,
+        readOnly: true,
         onSubmit: () => { },
         onError: () => { },
     },
