@@ -29,24 +29,24 @@ describe("SearchCriteria", () => {
                         searchParamsName: "given",
                     },
                     {
-                        label: "Patient",
+                        label: "Service",
                         type: "select",
-                        placeholder: "-- Please choose a patient --",
+                        placeholder: "-- Please choose a service --",
                         options: [
                             {
-                                value: "Dupont",
-                                label: "Dupont",
+                                value: "cardiology",
+                                label: "Cardiologie",
                             },
                             {
-                                value: "Renou",
-                                label: "Renou",
+                                value: "oncology",
+                                label: "Oncology",
                             },
                             {
-                                value: "Martin",
-                                label: "Martin",
+                                value: "radiology",
+                                label: "Radiology",
                             },
                         ],
-                        searchParamsName: "family",
+                        searchParamsName: "service",
                     },
                 ]}
             onSubmit={() => { }}

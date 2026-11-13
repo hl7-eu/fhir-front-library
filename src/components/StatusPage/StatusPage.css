@@ -1,0 +1,116 @@
+.hl7-status-page {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    min-height: calc(100vh - 10rem);
+    width: 100%;
+    padding: 2rem;
+}
+
+.hl7-status-page__illustration {
+    display: flex;
+    justify-content: center;
+    flex-shrink: 0;
+    max-width: 100%;
+}
+
+.hl7-status-page__illustration img {
+    display: block;
+    width: min(25vw, 23.75rem);
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+.hl7-status-page__content {
+    max-width: 42rem;
+}
+
+.hl7-status-page__title {
+    margin: 0;
+}
+
+.hl7-status-page__description,
+.hl7-status-page__details p {
+    margin: 0.75rem 0 0;
+    text-align: left;
+}
+
+.hl7-status-page__description {
+    font-size: 1.125rem;
+}
+
+.hl7-status-page__reason {
+    margin: 1rem 0 0.5rem;
+    font-size: 1.125rem;
+    text-align: left;
+}
+
+.hl7-status-page__details {
+    margin: 1rem 0 1.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--lightGray, #f7f6f7);
+    border-left: 0.25rem solid var(--primary-color, #007f5c);
+    overflow-wrap: anywhere;
+}
+
+.hl7-status-page__details summary {
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.hl7-status-page__home-link {
+    display: inline-block;
+}
+
+.hl7-status-page--in-progress {
+    min-height: calc(100vh - 13rem);
+    padding: 2rem 0;
+}
+
+.hl7-status-page--in-progress .hl7-status-page__illustration {
+    width: 25%;
+}
+
+.hl7-status-page--in-progress .hl7-status-page__illustration img {
+    width: 100%;
+    margin-right: 4rem;
+}
+
+@media (max-width: 768px) {
+    .hl7-status-page {
+        flex-direction: column;
+        min-height: 0;
+        gap: 2rem;
+        padding: 3rem 1.5rem;
+        text-align: center;
+    }
+
+    .hl7-status-page__illustration img {
+        width: min(70vw, 20rem);
+    }
+
+    .hl7-status-page--in-progress .hl7-status-page__illustration {
+        width: min(70vw, 20rem);
+    }
+
+    .hl7-status-page--in-progress .hl7-status-page__illustration img {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    .hl7-status-page__description,
+    .hl7-status-page__reason {
+        text-align: center;
+    }
+
+    .hl7-status-page--in-progress {
+        padding: 3rem 0;
+    }
+
+    .hl7-status-page__details p {
+        text-align: left;
+    }
+}

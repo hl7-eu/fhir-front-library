@@ -11,3 +11,5 @@ export { default as StatusTag } from './Status/StatusTag';
 export { default as StatusFlavor } from "./Status/StatusFlavor";
 export { default as StatusAlert } from "./Status/StatusAlert";
 export { default as FhirStatus } from "./Status/FhirStatus";
+export { ErrorPage, InProgressPage, StatusPage } from "./StatusPage";
+export type { ErrorPageProps, InProgressPageProps, StatusPageProps } from "./StatusPage";

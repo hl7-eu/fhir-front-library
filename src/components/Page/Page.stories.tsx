@@ -5,6 +5,9 @@ import { useArgs } from '@storybook/client-api';
 import Page from "./Page";
 // React
 import React from "react";
+// FontAwesome
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faGear } from "@fortawesome/free-solid-svg-icons";
 
 // Used to define the story title in the storybook
 const meta: Meta = {
@@ -81,6 +84,7 @@ const Template: StoryObj = {
             }
             }
             titleKey="Example page"
+            pageAction={<FontAwesomeIcon icon={faGear} size="xl"/>}
             loading={false}
             children={<>This is an example page to display.</>}
             footerConfigs={{

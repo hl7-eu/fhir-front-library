@@ -80,12 +80,14 @@ const SelectField: React.FC<FieldConfig> = (configs) => {
      */
     function getOptions() {
         if (valueSet?.length > 0) {
-            return valueSet.map(value => getOptionFromCode(value));
-        } else if (configs.field.answerOption?.length > 0) {
-            return configs.field.answerOption.map(option => getOptionFromOption(option));
-        } else {
-            return <></>
+            return valueSet.map((value, index) => getOptionFromCode(value, index));
         }
+
+        if (configs.field.answerOption && configs.field.answerOption.length > 0) {
+            return configs.field.answerOption.map((option, index) => getOptionFromOption(option, index));
+        }
+
+        return <></>;
     }
 
     /**
@@ -94,8 +96,15 @@ const SelectField: React.FC<FieldConfig> = (configs) => {
      * @param code the code to display as an option.
      * @returns the option HTML element.
      */
-    function getOptionFromCode(code: SimpleCode) {  
-        return <option value={code.system + '|' + code.code}>{code.display ?? code.code}</option>;
+    function getOptionFromCode(code: SimpleCode, index: number) {  
+        const value = `${code.system}|${code.code}`;
+        const label = code.display ?? code.code;
+
+        return (
+            <option key={`${value}-${index}`} value={value}>
+                {label}
+            </option>
+        );
     }
 
     /**
@@ -104,20 +113,45 @@ const SelectField: React.FC<FieldConfig> = (configs) => {
      * @param option the code to display as an option.
      * @returns the option HTML element.
      */
-    function getOptionFromOption(option: QuestionnaireItemAnswerOption) {
+    function getOptionFromOption(option: QuestionnaireItemAnswerOption, index: number) {
         if (option.valueCoding) {
-            return <option value={option.valueCoding.system + '|' + option.valueCoding.code} selected={option.initialSelected}>
-                    {option.valueCoding.display ?? option.valueCoding.code}
-                </option>;
-        } else {
-            //TODO Support reference options
-            var value = option.valueInteger ?? option.valueTime ?? option.valueDate ?? option.valueString;
-            return <option value={value}>{value}</option>;
+            const value = `${option.valueCoding.system}|${option.valueCoding.code}`;
+            const label = option.valueCoding.display ?? option.valueCoding.code;
+
+            return (
+                <option key={`${value}-${index}`} value={value}>
+                    {label}
+                </option>
+            );
         }
+
+        if (option.valueReference) {
+            const value = option.valueReference.reference ?? '';
+            const label = option.valueReference.display ?? option.valueReference.reference ?? '';
+
+            return (
+                <option key={`${value}-${index}`} value={value}>
+                    {label}
+                </option>
+            );
+        }
+
+        const value =
+            option.valueInteger ??
+            option.valueTime ??
+            option.valueDate ??
+            option.valueString ??
+            '';
+
+        return (
+            <option key={`${value}-${index}`} value={value}>
+                {value}
+            </option>
+        );
     }
 
     return (
-        <div hidden={configs.field.disabled(configs.form) && configs.field.hideOnDisabled}>{!configs.field.repeat &&
+        <div>{!configs.field.repeat &&
             <Form.Group key={configs.field.id}>
                 <Form.Label>
                     <b>{configs.field.prefix && configs.field.prefix} </b>
@@ -126,7 +160,7 @@ const SelectField: React.FC<FieldConfig> = (configs) => {
                 <Form.Select
                     value={configs.form[configs.field.id][0]}
                     style={configs.field.advancedRendering}
-                    disabled={configs.field.readOnly || configs.field.disabled(configs.form)}
+                    disabled={configs.field.readOnly || configs.field.disabled(configs.form, configs.field.id)}
                     required={configs.field.required}
                     name={configs.field.id}
                     onChange={handleChange}
@@ -156,7 +190,7 @@ const SelectField: React.FC<FieldConfig> = (configs) => {
                                     name={configs.field.id + index}
                                     value={value}
                                     style={configs.field.advancedRendering}
-                                    disabled={configs.field.readOnly || configs.field.disabled(configs.form)}
+                                    disabled={configs.field.readOnly || configs.field.disabled(configs.form, configs.field.id)}
                                     required={configs.field.required}
                                     onChange={handleChange}
                                 >

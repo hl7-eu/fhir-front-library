@@ -49,3 +49,68 @@ export const Questionnaire2: StoryObj<QuestionnaireProps> = {
         onError: () => { },
     },
 };
+
+export const QuestionnaireReadOnly: StoryObj<QuestionnaireProps> = {
+    ...Template,
+    args: {
+        dataUrl: 'https://integ.fyrstain.com/r5-data',
+        sdcUrl: 'https://integ.fyrstain.com/r5/questionnaire-processor',
+        terminologyUrl: 'https://integ.fyrstain.com/r5-data',
+        questionnaireUrl: "http://fyrstain.com/fhir/R5/socle-ig/Questionnaire/EXP-QuestionnairePatientSimplesFields",
+        readOnly: true,
+        onSubmit: () => { },
+        onError: () => { },
+    },
+};
+
+export const QuestionnaireROTSurPass: StoryObj<QuestionnaireProps> = {
+    ...Template,
+    args: {
+        dataUrl: 'https://integ.fyrstain.com/r4-data',
+        sdcUrl: 'https://integ.fyrstain.com/r4/questionnaire-processor',
+        terminologyUrl: 'https://integ.fyrstain.com/r4-data',
+        questionnaireUrl: "http://hl7.eu/fhir/ig/pcsp/Questionnaire/ROTSurPass",
+        onSubmit: (response) => { console.log("Submitted response:", JSON.stringify(response)); },
+        onError: () => { },
+    },
+};
+
+export const QuestionnaireCHRU: StoryObj<QuestionnaireProps> = {
+    ...Template,
+    args: {
+        dataUrl:'https://janus.ovh.fyrstain.com/orchestrator',
+        sdcUrl:'https://janus.ovh.fyrstain.com/orchestrator',
+        terminologyUrl:'https://janus.ovh.fyrstain.com/orchestrator',
+        questionnaireUrl: "http://chun.upcare.fr/fhir/Questionnaire/Questionnaire-UpCare",
+        contextSelection: {
+            enabled: true,
+            title: "Sélectionner un service",
+            displayMode: "modal",
+        },
+        onSubmit: () => { },
+        onError: () => { },
+    },
+};
+
+export const QuestionnaireHadSandboxPopulateUtf8: StoryObj<QuestionnaireProps> = {
+    ...Template,
+    args: {
+        dataUrl: 'https://had.sandbox.fyrstain.com/fhir',
+        sdcUrl: 'https://had.sandbox.fyrstain.com/fhir',
+        terminologyUrl: 'https://had.sandbox.fyrstain.com/fhir',
+        questionnaireUrl: "http://chun.upcare.fr/fhir/Questionnaire/Questionnaire-UpCare",
+        contextSelection: {
+            enabled: true,
+            title: "Select an organization",
+            displayMode: "modal",
+            resourceTypes: ["Organization"],
+        },
+        onSubmit: (questionnaireResponse, bundle) => {
+            console.log("Submitted response:", questionnaireResponse);
+            console.log("Extract bundle:", bundle);
+        },
+        onError: () => {
+            console.error("QuestionnaireHadSandboxPopulateUtf8 error");
+        },
+    },
+};

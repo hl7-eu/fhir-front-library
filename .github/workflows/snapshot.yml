@@ -1,0 +1,95 @@
+name: Publish snapshot
+
+on:
+  push:
+    branches: [feature]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-snapshot-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    name: Test, build and publish snapshot
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Validate package
+        id: package
+        run: |
+          PACKAGE_NAME="$(node -p "require('./package.json').name")"
+          BASE_VERSION="$(node -p "require('./package.json').version")"
+          PRIVATE="$(node -p "String(require('./package.json').private === true)")"
+          if [[ "$PACKAGE_NAME" != @fyrstain/* || "$PRIVATE" == true ]]; then
+            echo "Expected a publishable @fyrstain package." >&2
+            exit 1
+          fi
+          if [[ ! "$BASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-SNAPSHOT$ ]]; then
+            echo "Expected X.Y.Z-SNAPSHOT on feature; got $BASE_VERSION." >&2
+            exit 1
+          fi
+          printf 'base_version=%s\n' "$BASE_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Tests
+        run: npm test -- --runInBand
+
+      - name: Set unique snapshot version
+        env:
+          BASE_VERSION: ${{ steps.package.outputs.base_version }}
+        run: npm version "$BASE_VERSION.$GITHUB_RUN_NUMBER.$GITHUB_RUN_ATTEMPT" --no-git-tag-version --ignore-scripts
+
+      - name: Build
+        run: npm run build
+
+      - name: Check package contents
+        run: npm pack --dry-run
+
+      - name: Configure Nexus npm authentication
+        id: registry
+        env:
+          NPMRC: ${{ secrets.NPMRC }}
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+        run: |
+          if [[ -z "$NPMRC" || -z "$NEXUS_USERNAME" || -z "$NEXUS_PASSWORD" ]]; then
+            echo "NPMRC, NEXUS_USERNAME and NEXUS_PASSWORD repository secrets are required." >&2
+            exit 1
+          fi
+
+          NPMRC_PATH="$RUNNER_TEMP/.npmrc"
+          printf '%s\n' "$NPMRC" > "$NPMRC_PATH"
+          chmod 600 "$NPMRC_PATH"
+          export NPM_CONFIG_USERCONFIG="$NPMRC_PATH"
+          REGISTRY_URL="$(npm config get @fyrstain:registry)"
+          if [[ ! "$REGISTRY_URL" =~ ^https?:// || "$REGISTRY_URL" == *registry.npmjs.org* ]]; then
+            echo "NPMRC must configure @fyrstain:registry to the Nexus npm registry." >&2
+            exit 1
+          fi
+
+          AUTH_KEY="$(node -e 'const u = new URL(process.argv[1]); console.log(`//${u.host}${u.pathname.replace(/\/*$/, "/")}:_auth`)' "$REGISTRY_URL")"
+          BASIC_AUTH="$(printf '%s:%s' "$NEXUS_USERNAME" "$NEXUS_PASSWORD" | base64 -w 0)"
+          printf '@fyrstain:registry=%s\n%s=%s\n' "$REGISTRY_URL" "$AUTH_KEY" "$BASIC_AUTH" > "$NPMRC_PATH"
+          printf 'NPM_CONFIG_USERCONFIG=%s\n' "$NPMRC_PATH" >> "$GITHUB_ENV"
+          printf 'url=%s\n' "$REGISTRY_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Publish snapshot to Nexus
+        env:
+          REGISTRY_URL: ${{ steps.registry.outputs.url }}
+        run: npm publish --tag snapshot --registry "$REGISTRY_URL"

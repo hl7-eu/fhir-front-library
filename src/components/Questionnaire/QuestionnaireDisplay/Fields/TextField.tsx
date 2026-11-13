@@ -28,15 +28,26 @@ const TextField: React.FC<FieldConfig> = (configs) => {
     //     }
     // }, [configs.form]);
 
+    /**
+     * Check if the label should be shown.
+     * If the label is empty or only contains spaces, it should not be shown.
+     */
+    const shouldShowLabel =
+        configs.field.label && configs.field.label.trim() !== "";
+
     ////////////////////////////////
     //          Content           //
     ////////////////////////////////
 
     return (
-        <Form.Group key={configs.field.id} hidden={configs.field.disabled(configs.form) && configs.field.hideOnDisabled}>
+        <Form.Group key={configs.field.id}>
             <Form.Label>
-                <b>{configs.field.prefix && configs.field.prefix} </b>
-                {configs.field.label} {configs.field.required && "* "}:
+                {shouldShowLabel && (
+                    <>
+                        <b>{configs.field.prefix && configs.field.prefix} </b>
+                        {configs.field.label} {configs.field.required && "* "}:
+                    </>
+                )}
             </Form.Label>
             <Form.Control
                 name={configs.field.id}
@@ -44,7 +55,7 @@ const TextField: React.FC<FieldConfig> = (configs) => {
                 as="textarea"
                 placeholder={configs.field.placeholder}
                 style={configs.field.advancedRendering}
-                disabled={configs.field.disabled(configs.form)}
+                disabled={configs.field.disabled(configs.form, configs.field.id)}
                 readOnly={configs.field.readOnly}
                 required={configs.field.required}
                 //TODO What if it is an array ??

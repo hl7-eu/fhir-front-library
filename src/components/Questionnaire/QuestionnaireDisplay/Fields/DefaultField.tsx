@@ -15,7 +15,7 @@ export interface DefaultFieldConf {
     pattern?: string;
     placeholder?: string;
     advancedRendering: { [key: string]: string };
-    disabled: (form: { [key: string]: string[] }) => boolean;
+    disabled: (form: { [key: string]: string[] }, questionId: string) => boolean;
     hideOnDisabled: boolean;
     readOnly: boolean;
     required: boolean;
@@ -73,30 +73,39 @@ const DefaultField: React.FC<DefaultFieldConf> = (configs) => {
         configs.updateForm(newForm);
     }
 
+    /**
+     * Check if the label should be shown. 
+     * If no label (field 'Text' on the Questionnaire) is provided, it won't be shown.
+     */
+    const shouldShowLabel = configs.label && configs.label.trim() !== "";
+
     ////////////////////////////////
     //          Content           //
     ////////////////////////////////
 
     return (
-        <div className='field' hidden={configs.disabled(configs.form) && configs.hideOnDisabled}>{!configs.repeat &&
+        <div className='field'>{!configs.repeat &&
             <Form.Group key={configs.id}>
-                <Form.Label>
-                    <b>{configs.prefix && configs.prefix} </b>
-                    {configs.label} {configs.required && "* "}:
-                </Form.Label>
+                {shouldShowLabel && (
+                    <Form.Label>
+                        <b>{configs.prefix && configs.prefix} </b>
+                        {configs.label} {configs.required && "* "}:
+                    </Form.Label>
+                )}
                 <Form.Control
                     name={configs.id}
                     type={configs.type}
                     pattern={configs.pattern}
                     placeholder={configs.placeholder}
                     style={configs.advancedRendering}
-                    disabled={configs.disabled(configs.form)}
+                    disabled={configs.disabled(configs.form, configs.id)}
                     readOnly={configs.readOnly}
                     required={configs.required}
-                    value={configs.values[0]}
+                    {...(configs.type !== 'file' && { value: configs.values[0] })}
                     maxLength={configs.maxLength}
                     onChange={configs.handleChange}
                     step={configs.type === "time" ? "1" : "any"}
+                    accept={configs.type === "file" ? "*/*" : undefined}
                 />
                 <Form.Control.Feedback type="invalid">
                     {configs.getValidationMessage ? configs.getValidationMessage() : getValidationMessage()}
@@ -118,13 +127,14 @@ const DefaultField: React.FC<DefaultFieldConf> = (configs) => {
                                     pattern={configs.pattern}
                                     placeholder={configs.placeholder}
                                     style={configs.advancedRendering}
-                                    disabled={configs.disabled(configs.form)}
+                                    disabled={configs.disabled(configs.form, configs.id)}
                                     readOnly={configs.readOnly}
                                     required={configs.required}
-                                    value={value}
+                                    {...(configs.type !== 'file' && { value: value })}
                                     maxLength={configs.maxLength}
                                     onChange={configs.handleChange}
                                     step="any"
+                                    accept={configs.type === "file" ? "*/*" : undefined}
                                 />
                                 {index !== 0 &&
                                     <FontAwesomeIcon

@@ -47,7 +47,7 @@ const BooleanField: React.FC<FieldConfig> = (configs) => {
     ////////////////////////////////
 
     return (
-        <Form.Group key={configs.field.id} hidden={ configs.field.disabled(configs.form) && configs.field.hideOnDisabled }>
+        <Form.Group key={configs.field.id}>
             <Form.Label>
                 <b>{configs.field.prefix && configs.field.prefix} </b>
                 {configs.field.label} {configs.field.required && "* "}:
@@ -60,7 +60,7 @@ const BooleanField: React.FC<FieldConfig> = (configs) => {
                     name={configs.field.id}
                     type={configs.field.required ? 'radio' : 'checkbox'}
                     required={configs.field.required}
-                    disabled={configs.field.readOnly || configs.field.disabled(configs.form)}
+                    disabled={configs.field.readOnly || configs.field.disabled(configs.form, configs.field.id)}
                     checked={isFalse}
                     onChange={handleChange}
                 />
@@ -71,7 +71,7 @@ const BooleanField: React.FC<FieldConfig> = (configs) => {
                     name={configs.field.id}
                     type={configs.field.required ? 'radio' : 'checkbox'}
                     required={configs.field.required}
-                    disabled={configs.field.readOnly || configs.field.disabled(configs.form)}
+                    disabled={configs.field.readOnly || configs.field.disabled(configs.form, configs.field.id)}
                     checked={isTrue}
                     onChange={handleChange}
                 />

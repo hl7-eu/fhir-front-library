@@ -30,7 +30,7 @@ export interface PaginatedTableProperties {
     action?: {
         // Choose the icon of the action
         icon?: IconProp,
-        onClick?: (id: string, event: any) => void,
+        onClick?: (id: string, event: any, item?: any) => void,
         // Or choose a component to render
         component?: JSX.Element,
         // Display an icon
@@ -182,7 +182,7 @@ const PaginatedTable: React.FC<PaginatedTableProperties> = (configs) => {
                                                             icon={action.icon!}
                                                             onClick={(e) => {
                                                                 e.preventDefault();
-                                                                action.onClick!(item.id, e)
+                                                                action.onClick!(item.id, e, item)
                                                             }}
                                                         />
                                                     :

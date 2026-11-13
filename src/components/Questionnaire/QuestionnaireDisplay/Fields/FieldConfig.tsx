@@ -2,6 +2,17 @@
 import { QuestionnaireItemAnswerOption } from 'fhir/r5';
 import { ValueSetLoader } from '../../../../services';
 
+export interface VariableDefinition {
+    name: string;
+    expression: string;
+    language?: string;
+}
+
+export interface CalculatedExpressionDefinition {
+    expression: string;
+    language?: string;
+}
+
 // Interface describing a field in the questionnaire
 export interface Field {
     id: string;
@@ -11,7 +22,7 @@ export interface Field {
     placeholder?: string;
     advancedRendering: { [key: string]: string };
     hidden: boolean;
-    disabled: (form: { [key: string]: string[] }) => boolean;
+    disabled: (form: { [key: string]: string[] }, questionId: string) => boolean;
     hideOnDisabled: boolean;
     readOnly: boolean;
     required: boolean;
@@ -22,6 +33,9 @@ export interface Field {
     subField: Field[];
     answerValueSet?: string;
     answerOption: QuestionnaireItemAnswerOption[];
+    
+    variableDefinitions?: VariableDefinition[];
+    calculatedExpression?: CalculatedExpressionDefinition;
 }
 
 /**

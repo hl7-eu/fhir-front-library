@@ -60,3 +60,46 @@ const Template: StoryObj = {
 export const ClassicFooter: StoryObj = {
     ...Template,
 };
+export const WithImplementationGuide: StoryObj = {
+    render: () => <Footer
+        logo={[
+            {
+                logoLink: 'https://sandbox.hl7europe.eu/questionnaire/assets/HL7-EU-Logo.jpg',
+                link: 'https://hl7.eu/',
+                alt: 'HL7EU Logo'
+            }
+        ]}
+        items={[
+            {
+                label: 'About',
+                link: '#',
+            },
+            {
+                label: 'Contact',
+                link: '#',
+            },
+            {
+                label: 'Problem Tracking',
+                link: '#',
+            },
+        ]}
+        implementationGuide={{
+            label: 'Implementation Guide',
+            link: '/ImplementationGuide',
+        }}
+        languages={{
+            default: "en",
+            onChange: () => { return; },
+            options: [
+                {
+                    label: 'English',
+                    value: 'en'
+                },
+                {
+                    label: 'Français',
+                    value: 'fr'
+                }
+            ]
+        }}
+    />,
+};

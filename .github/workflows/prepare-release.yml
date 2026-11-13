@@ -1,0 +1,102 @@
+name: Prepare release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: Release version in X.Y.Z format (for example, 0.0.29)
+        required: true
+        type: string
+      next_version:
+        description: Next development version in X.Y.Z-SNAPSHOT format (for example, 0.0.30-SNAPSHOT)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: prepare-release-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Create release pull request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require feature branch
+        env:
+          SOURCE_BRANCH: feature
+        run: |
+          if [[ "$GITHUB_REF_NAME" != "$SOURCE_BRANCH" ]]; then
+            echo "Run this workflow from branch $SOURCE_BRANCH, not $GITHUB_REF_NAME." >&2
+            exit 1
+          fi
+
+      - name: Checkout feature
+        uses: actions/checkout@v4
+        with:
+          ref: feature
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Validate versions
+        env:
+          RELEASE_VERSION: ${{ inputs.release_version }}
+          NEXT_VERSION: ${{ inputs.next_version }}
+        run: |
+          if [[ ! "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "release_version must use X.Y.Z." >&2
+            exit 1
+          fi
+          if [[ ! "$NEXT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-SNAPSHOT$ ]]; then
+            echo "next_version must use X.Y.Z-SNAPSHOT." >&2
+            exit 1
+          fi
+
+          CURRENT_VERSION="$(node -p "require('./package.json').version")"
+          if [[ "$CURRENT_VERSION" != "$RELEASE_VERSION-SNAPSHOT" ]]; then
+            echo "Expected $RELEASE_VERSION-SNAPSHOT on feature; got $CURRENT_VERSION." >&2
+            exit 1
+          fi
+
+          if git ls-remote --exit-code --heads origin "release/$RELEASE_VERSION" >/dev/null 2>&1; then
+            echo "Branch release/$RELEASE_VERSION already exists." >&2
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_VERSION" >/dev/null 2>&1; then
+            echo "Tag $RELEASE_VERSION already exists." >&2
+            exit 1
+          fi
+
+      - name: Create release branch
+        env:
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        run: |
+          git switch -c "release/$RELEASE_VERSION"
+          npm version "$RELEASE_VERSION" --no-git-tag-version --ignore-scripts
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git diff --check -- package.json package-lock.json
+          git add package.json package-lock.json
+          git commit -m "chore(release): prepare $RELEASE_VERSION"
+          git push origin "HEAD:refs/heads/release/$RELEASE_VERSION"
+
+      - name: Create pull request to master
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
+          NEXT_VERSION: ${{ inputs.next_version }}
+        run: |
+          PR_BODY="$(printf 'Release-Version: %s\n\nNext-Version: %s\n' "$RELEASE_VERSION" "$NEXT_VERSION")"
+          gh pr create \
+            --base master \
+            --head "release/$RELEASE_VERSION" \
+            --title "Release $RELEASE_VERSION" \
+            --body "$PR_BODY"

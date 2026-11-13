@@ -6,6 +6,7 @@
 
 .repeat-cross {
     margin: .4rem;
+    cursor: pointer;
 }
 
 .repeat-cross:hover {

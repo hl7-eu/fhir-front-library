@@ -1,0 +1,168 @@
+name: Publish release
+
+on:
+  pull_request:
+    branches: [master]
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: npm-publish-release-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish merged release
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.event.pull_request.head.ref, 'release/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout merged release
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - name: Fetch branches and tags
+        run: git fetch origin master feature --tags --prune
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Validate release metadata
+        id: package
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          RELEASE_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          PACKAGE_NAME="$(node -p "require('./package.json').name")"
+          VERSION="$(node -p "require('./package.json').version")"
+          PRIVATE="$(node -p "String(require('./package.json').private === true)")"
+          RELEASE_FROM_PR="$(printf '%s\n' "$PR_BODY" | sed -nE 's/^Release-Version:[[:space:]]*([^[:space:]]+)[[:space:]]*$/\1/p' | head -n 1)"
+          NEXT_VERSION="$(printf '%s\n' "$PR_BODY" | sed -nE 's/^Next-Version:[[:space:]]*([^[:space:]]+)[[:space:]]*$/\1/p' | head -n 1)"
+          if [[ "$PACKAGE_NAME" != @fyrstain/* || "$PRIVATE" == true ]]; then
+            echo "Expected a publishable @fyrstain package." >&2
+            exit 1
+          fi
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ || "$RELEASE_BRANCH" != "release/$VERSION" || "$RELEASE_FROM_PR" != "$VERSION" ]]; then
+            echo "The merged version, branch and pull request must match X.Y.Z." >&2
+            exit 1
+          fi
+          if [[ ! "$NEXT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-SNAPSHOT$ ]]; then
+            echo "Missing or invalid Next-Version in the release pull request." >&2
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor HEAD origin/master; then
+            echo "The merged release commit is not on master." >&2
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null 2>&1; then
+            echo "Git tag $VERSION already exists." >&2
+            exit 1
+          fi
+          printf 'name=%s\n' "$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
+          printf 'version=%s\n' "$VERSION" >> "$GITHUB_OUTPUT"
+          printf 'next_version=%s\n' "$NEXT_VERSION" >> "$GITHUB_OUTPUT"
+          printf 'commit=%s\n' "$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Tests
+        run: npm test -- --runInBand
+
+      - name: Build
+        run: npm run build
+
+      - name: Check package contents
+        run: npm pack --dry-run
+
+      - name: Configure Nexus npm authentication
+        id: registry
+        env:
+          NPMRC: ${{ secrets.NPMRC }}
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+        run: |
+          if [[ -z "$NPMRC" || -z "$NEXUS_USERNAME" || -z "$NEXUS_PASSWORD" ]]; then
+            echo "NPMRC, NEXUS_USERNAME and NEXUS_PASSWORD repository secrets are required." >&2
+            exit 1
+          fi
+
+          NPMRC_PATH="$RUNNER_TEMP/.npmrc"
+          printf '%s\n' "$NPMRC" > "$NPMRC_PATH"
+          chmod 600 "$NPMRC_PATH"
+          export NPM_CONFIG_USERCONFIG="$NPMRC_PATH"
+          REGISTRY_URL="$(npm config get @fyrstain:registry)"
+          if [[ ! "$REGISTRY_URL" =~ ^https?:// || "$REGISTRY_URL" == *registry.npmjs.org* ]]; then
+            echo "NPMRC must configure @fyrstain:registry to the Nexus npm registry." >&2
+            exit 1
+          fi
+
+          AUTH_KEY="$(node -e 'const u = new URL(process.argv[1]); console.log(`//${u.host}${u.pathname.replace(/\/*$/, "/")}:_auth`)' "$REGISTRY_URL")"
+          BASIC_AUTH="$(printf '%s:%s' "$NEXUS_USERNAME" "$NEXUS_PASSWORD" | base64 -w 0)"
+          printf '@fyrstain:registry=%s\n%s=%s\n' "$REGISTRY_URL" "$AUTH_KEY" "$BASIC_AUTH" > "$NPMRC_PATH"
+          printf 'NPM_CONFIG_USERCONFIG=%s\n' "$NPMRC_PATH" >> "$GITHUB_ENV"
+          printf 'url=%s\n' "$REGISTRY_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure version is not published
+        env:
+          PACKAGE_NAME: ${{ steps.package.outputs.name }}
+          VERSION: ${{ steps.package.outputs.version }}
+          REGISTRY_URL: ${{ steps.registry.outputs.url }}
+        run: |
+          if npm view "$PACKAGE_NAME@$VERSION" version --registry "$REGISTRY_URL" >/dev/null 2>&1; then
+            echo "$PACKAGE_NAME@$VERSION already exists in Nexus." >&2
+            exit 1
+          fi
+
+      - name: Publish release to Nexus
+        env:
+          REGISTRY_URL: ${{ steps.registry.outputs.url }}
+        run: npm publish --tag latest --registry "$REGISTRY_URL"
+
+      - name: Create Git tag and GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.package.outputs.version }}
+          RELEASE_COMMIT: ${{ steps.package.outputs.commit }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$VERSION" "$RELEASE_COMMIT" -m "Release $VERSION"
+          git push origin "refs/tags/$VERSION"
+          gh release create "$VERSION" --target "$RELEASE_COMMIT" --title "Release $VERSION" --generate-notes
+
+      - name: Open next development version pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEXT_VERSION: ${{ steps.package.outputs.next_version }}
+          RELEASE_VERSION: ${{ steps.package.outputs.version }}
+        run: |
+          NEXT_BRANCH="chore/prepare-$NEXT_VERSION"
+          if git ls-remote --exit-code --heads origin "$NEXT_BRANCH" >/dev/null 2>&1; then
+            echo "Branch $NEXT_BRANCH already exists." >&2
+            exit 1
+          fi
+          git switch -c "$NEXT_BRANCH"
+          npm version "$NEXT_VERSION" --no-git-tag-version --ignore-scripts
+          git diff --check -- package.json package-lock.json
+          git add package.json package-lock.json
+          git commit -m "chore: prepare next development version $NEXT_VERSION"
+          git push origin "HEAD:refs/heads/$NEXT_BRANCH"
+          gh pr create \
+            --base feature \
+            --head "$NEXT_BRANCH" \
+            --title "chore: prepare $NEXT_VERSION" \
+            --body "Sets the next development version after release $RELEASE_VERSION."

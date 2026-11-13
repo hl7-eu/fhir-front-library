@@ -84,7 +84,7 @@ const QuantityField: React.FC<FieldConfig> = (configs) => {
     ////////////////////////////////
 
     return (
-        <div className='field' hidden={configs.field.disabled(configs.form) && configs.field.hideOnDisabled}>{!configs.field.repeat &&
+        <div className='field'>{!configs.field.repeat &&
             <Form.Group key={configs.field.id}>
                 <Form.Label>
                     <b>{configs.field.prefix && configs.field.prefix} </b>
@@ -95,7 +95,7 @@ const QuantityField: React.FC<FieldConfig> = (configs) => {
                     type="number"
                     placeholder={"Value"}
                     style={configs.field.advancedRendering}
-                    disabled={configs.field.disabled(configs.form)}
+                    disabled={configs.field.disabled(configs.form, configs.field.id)}
                     readOnly={configs.field.readOnly}
                     required={configs.field.required}
                     value={getValueFromForm(configs.form[configs.field.id][0])}
@@ -107,7 +107,7 @@ const QuantityField: React.FC<FieldConfig> = (configs) => {
                     type="string"
                     placeholder={"Unit"}
                     style={configs.field.advancedRendering}
-                    disabled={configs.field.disabled(configs.form)}
+                    disabled={configs.field.disabled(configs.form, configs.field.id)}
                     readOnly={configs.field.readOnly}
                     required={configs.field.required}
                     value={getUnitFromForm(configs.form[configs.field.id][0])}
@@ -133,7 +133,7 @@ const QuantityField: React.FC<FieldConfig> = (configs) => {
                                     type="number"
                                     placeholder={"Value"}
                                     style={configs.field.advancedRendering}
-                                    disabled={configs.field.disabled(configs.form)}
+                                    disabled={configs.field.disabled(configs.form, configs.field.id)}
                                     readOnly={configs.field.readOnly}
                                     required={configs.field.required}
                                     value={getValueFromForm(value)}
@@ -145,7 +145,7 @@ const QuantityField: React.FC<FieldConfig> = (configs) => {
                                     type="string"
                                     placeholder={"Unit"}
                                     style={configs.field.advancedRendering}
-                                    disabled={configs.field.disabled(configs.form)}
+                                    disabled={configs.field.disabled(configs.form, configs.field.id)}
                                     readOnly={configs.field.readOnly}
                                     required={configs.field.required}
                                     value={getUnitFromForm(value)}

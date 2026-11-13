@@ -11,7 +11,7 @@ const DisplayField: React.FC<FieldConfig> = (configs) => {
     ////////////////////////////////
 
     return (
-        <div className='display-field' hidden={configs.field.disabled(configs.form) && configs.field.hideOnDisabled}>
+        <div className='display-field'>
             <Title level={5} prefix={configs.field.prefix} content={configs.field.label} />
         </div>
     );
